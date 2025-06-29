@@ -57,8 +57,13 @@ public class ConfluenceServiceClient {
 
     /**
      * Search Confluence content using CQL.
+     * @param cql CQL query string. Examples: 'type=page AND space=DEV', 'title~"Meeting Notes"', 'text~"keyword"', 'space="DEV" AND created>=2024-01-01'
+     * @param limit Maximum number of results to return (1-100). Default: 10
      */
-    @Tool(description = "Search Confluence content using CQL queries.")
+    @Tool(description = "Search Confluence content using CQL (Confluence Query Language). " +
+                       "Parameters: cql (required) - CQL query string like 'type=page AND space=DEV'; " +
+                       "limit (optional) - Max results 1-100, default 10. " +
+                       "Examples: 'type=page AND space=DEV', 'title~\"Meeting Notes\"', 'text~\"important\"'")
     public Map<String, Object> searchContent(String cql, Integer limit) {
         logger.info("Searching Confluence content with CQL: {}", cql);
         try {
@@ -73,8 +78,12 @@ public class ConfluenceServiceClient {
 
     /**
      * Get page content by ID.
+     * @param pageId Confluence page ID (numeric string, e.g., "123456")
+     * @param includeBody Whether to include page body content (true/false). Default: false
      */
-    @Tool(description = "Get specific Confluence page by ID.")
+    @Tool(description = "Get specific Confluence page by ID. " +
+                       "Parameters: pageId (required) - Numeric page ID like '123456'; " +
+                       "includeBody (optional) - Include content true/false, default false")
     public Map<String, Object> getPageById(String pageId, Boolean includeBody) {
         logger.info("Fetching page by ID: {}", pageId);
         try {
@@ -90,8 +99,16 @@ public class ConfluenceServiceClient {
 
     /**
      * Update an existing page.
+     * @param pageId Page ID to update (numeric string, e.g., "123456")
+     * @param title New page title
+     * @param content New page content in Confluence storage format
+     * @param currentVersion Current version number of the page (required for update)
      */
-    @Tool(description = "Update an existing Confluence page.")
+    @Tool(description = "Update an existing Confluence page. " +
+                       "Parameters: pageId (required) - Numeric page ID; " +
+                       "title (required) - New page title; " +
+                       "content (required) - New content in storage format; " +
+                       "currentVersion (required) - Current version number")
     public Map<String, Object> updatePage(String pageId, String title, String content, Integer currentVersion) {
         logger.info("Updating page: {}", pageId);
         try {
@@ -150,8 +167,14 @@ public class ConfluenceServiceClient {
 
     /**
      * Create a new document with specified content.
+     * @param spaceKey Space key (e.g., "DEV", "TEAM", "DOCS")
+     * @param title Page title (e.g., "Meeting Notes", "API Documentation")
+     * @param content Page content in Confluence storage format (HTML-like)
      */
-    @Tool(description = "Create a new Confluence document with a given title and content in a specific space.")
+    @Tool(description = "Create a new Confluence document with a given title and content in a specific space. " +
+                       "Parameters: spaceKey (required) - Space key like 'DEV' or 'TEAM'; " +
+                       "title (required) - Page title; " +
+                       "content (required) - Page content in storage format")
     public Map<String, Object> createDocument(String spaceKey, String title, String content) {
         logger.info("Creating a new document '{}' in space '{}'", title, spaceKey);
         try {

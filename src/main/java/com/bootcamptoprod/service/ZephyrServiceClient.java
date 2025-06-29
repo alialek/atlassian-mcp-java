@@ -38,7 +38,12 @@ public class ZephyrServiceClient {
         logger.info("ZephyrServiceClient initialized for URL: {}", config.getBaseUrl());
     }
 
-    @Tool(description = "Get test case details from Zephyr")
+    /**
+     * Get test case details from Zephyr.
+     * @param testCaseKey Test case key (e.g., "JQA-T123", "PROJ-T456")
+     */
+    @Tool(description = "Get test case details from Zephyr. " +
+                       "Parameters: testCaseKey (required) - Test case key like 'JQA-T123' or 'PROJ-T456'")
     public Map<String, Object> getTestCase(String testCaseKey) {
         logger.info("Fetching test case: {}", testCaseKey);
         try {
@@ -51,7 +56,15 @@ public class ZephyrServiceClient {
         }
     }
 
-    @Tool(description = "Search test cases in Zephyr using TQL")
+    /**
+     * Search test cases in Zephyr using TQL.
+     * @param tqlQuery TQL query string. Examples: 'projectKey = "JQA"', 'status = "Draft"', 'name ~ "login"'
+     * @param maxResults Maximum number of results to return (1-100). Default: 50
+     */
+    @Tool(description = "Search test cases in Zephyr using TQL (Test Query Language). " +
+                       "Parameters: tqlQuery (required) - TQL query like 'projectKey = \"JQA\"' or 'status = \"Draft\"'; " +
+                       "maxResults (optional) - Max results 1-100, default 50. " +
+                       "Examples: 'projectKey = \"JQA\" AND status = \"Draft\"', 'name ~ \"login\"'")
     public Map<String, Object> searchTestCases(String tqlQuery, Integer maxResults) {
         logger.info("Searching test cases with TQL: {}", tqlQuery);
         try {
@@ -65,7 +78,16 @@ public class ZephyrServiceClient {
         }
     }
 
-    @Tool(description = "Create a new test case in Zephyr")
+    /**
+     * Create a new test case in Zephyr.
+     * @param projectKey Project key (e.g., "JQA", "DEV", "TEST")
+     * @param name Test case name (e.g., "Test user login", "Verify API response")
+     * @param status Test case status (e.g., "Draft", "Approved", "Deprecated"). Default: "Draft"
+     */
+    @Tool(description = "Create a new test case in Zephyr. " +
+                       "Parameters: projectKey (required) - Project key like 'JQA'; " +
+                       "name (required) - Test case name; " +
+                       "status (optional) - Status like 'Draft', 'Approved', default 'Draft'")
     public Map<String, Object> createTestCase(String projectKey, String name, String status) {
         logger.info("Creating test case in project: {}", projectKey);
         try {
@@ -135,7 +157,16 @@ public class ZephyrServiceClient {
         }
     }
 
-    @Tool(description = "Create test execution result in Zephyr")
+    /**
+     * Create test execution result in Zephyr.
+     * @param testCaseKey Test case key (e.g., "JQA-T123")
+     * @param status Test execution status (e.g., "Pass", "Fail", "Blocked", "Not Executed")
+     * @param comment Test execution comment/notes (optional)
+     */
+    @Tool(description = "Create test execution result in Zephyr. " +
+                       "Parameters: testCaseKey (required) - Test case key like 'JQA-T123'; " +
+                       "status (required) - Execution status like 'Pass', 'Fail', 'Blocked'; " +
+                       "comment (optional) - Execution notes/comments")
     public Map<String, Object> createTestResult(String testCaseKey, String status, String comment) {
         logger.info("Creating test result for test case: {}", testCaseKey);
         try {
@@ -170,7 +201,20 @@ public class ZephyrServiceClient {
         }
     }
 
-    @Tool(description = "Add test step to a test case")
+    /**
+     * Add test step to a test case.
+     * @param issueId JIRA issue ID (numeric string, e.g., "12345")
+     * @param projectId JIRA project ID (numeric string, e.g., "10000") 
+     * @param step Test step description (e.g., "Navigate to login page", "Enter credentials")
+     * @param data Test data/input for this step (optional, e.g., "username: admin, password: test123")
+     * @param result Expected result for this step (optional, e.g., "User should be logged in")
+     */
+    @Tool(description = "Add test step to a test case. " +
+                       "Parameters: issueId (required) - JIRA issue ID like '12345'; " +
+                       "projectId (required) - JIRA project ID like '10000'; " +
+                       "step (required) - Step description; " +
+                       "data (optional) - Test data/input; " +
+                       "result (optional) - Expected result")
     public Map<String, Object> addTestStep(String issueId, String projectId, String step, String data, String result) {
         logger.info("Adding test step to issue: {}", issueId);
         try {

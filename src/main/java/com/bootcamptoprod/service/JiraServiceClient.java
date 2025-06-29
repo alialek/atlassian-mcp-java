@@ -39,7 +39,15 @@ public class JiraServiceClient {
         logger.info("JiraServiceClient initialized for URL: {}", config.getUrl());
     }
 
-    @Tool(description = "Search Jira issues using JQL (Jira Query Language)")
+    /**
+     * Search Jira issues using JQL.
+     * @param jql JQL query string. Examples: 'project = "DEV"', 'assignee = currentUser()', 'status = "In Progress"'
+     * @param maxResults Maximum number of results to return (1-100). Default: 50
+     */
+    @Tool(description = "Search Jira issues using JQL (Jira Query Language). " +
+                       "Parameters: jql (required) - JQL query like 'project = \"DEV\"' or 'assignee = currentUser()'; " +
+                       "maxResults (optional) - Max results 1-100, default 50. " +
+                       "Examples: 'project = \"DEV\" AND status = \"Open\"', 'assignee = currentUser() AND updated >= -7d'")
     public Map<String, Object> searchIssues(String jql, Integer maxResults) {
         logger.info("Searching Jira issues with JQL: {}", jql);
         try {
@@ -52,7 +60,12 @@ public class JiraServiceClient {
         }
     }
 
-    @Tool(description = "Get details of a specific Jira issue")
+    /**
+     * Get details of a specific Jira issue.
+     * @param issueKey Jira issue key (e.g., "DEV-123", "PROJ-456")
+     */
+    @Tool(description = "Get details of a specific Jira issue. " +
+                       "Parameters: issueKey (required) - Issue key like 'DEV-123' or 'PROJ-456'")
     public Map<String, Object> getIssue(String issueKey) {
         logger.info("Fetching Jira issue: {}", issueKey);
         try {
@@ -64,7 +77,18 @@ public class JiraServiceClient {
         }
     }
 
-    @Tool(description = "Create a new Jira issue")
+    /**
+     * Create a new Jira issue.
+     * @param projectKey Project key (e.g., "DEV", "PROJ", "SUPPORT")
+     * @param summary Issue summary/title (e.g., "Fix login bug", "Add new feature")
+     * @param issueType Issue type (e.g., "Task", "Bug", "Story", "Epic")
+     * @param description Issue description (optional, plain text)
+     */
+    @Tool(description = "Create a new Jira issue. " +
+                       "Parameters: projectKey (required) - Project key like 'DEV'; " +
+                       "summary (required) - Issue title/summary; " +
+                       "issueType (required) - Type like 'Task', 'Bug', 'Story'; " +
+                       "description (optional) - Issue description text")
     public Map<String, Object> createIssue(String projectKey, String summary, String issueType, String description) {
         logger.info("Creating Jira issue in project: {}", projectKey);
         try {
@@ -100,7 +124,16 @@ public class JiraServiceClient {
         }
     }
 
-    @Tool(description = "Update a Jira issue")
+    /**
+     * Update a Jira issue.
+     * @param issueKey Issue key to update (e.g., "DEV-123")
+     * @param summary New issue summary/title
+     * @param description New issue description (plain text)
+     */
+    @Tool(description = "Update a Jira issue. " +
+                       "Parameters: issueKey (required) - Issue key like 'DEV-123'; " +
+                       "summary (required) - New summary/title; " +
+                       "description (required) - New description text")
     public Map<String, Object> updateIssue(String issueKey, String summary, String description) {
         logger.info("Updating Jira issue: {}", issueKey);
         try {
