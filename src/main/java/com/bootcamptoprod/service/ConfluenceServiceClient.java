@@ -1,9 +1,10 @@
 package com.bootcamptoprod.service;
 
+import com.bootcamptoprod.config.AtlassianConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.tool.annotation.Tool;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -15,21 +16,27 @@ import org.springframework.web.client.RestTemplate;
 import java.util.Map;
 
 @Service
+@EnableConfigurationProperties(AtlassianConfig.ConfluenceConfig.class)
 public class ConfluenceServiceClient {
 
     private static final Logger logger = LoggerFactory.getLogger(ConfluenceServiceClient.class);
-
     private final RestTemplate restTemplate;
 
-    public ConfluenceServiceClient(RestTemplateBuilder builder,
-                                   @Value("${confluence.auth.email}") String email,
-                                   @Value("${confluence.auth.apiToken}") String apiToken,
-                                   @Value("${confluence.baseUrl}") String confluenceBaseUrl) {
-        this.restTemplate = builder
-                .rootUri(confluenceBaseUrl)
-                .basicAuthentication(email, apiToken)
-                .build();
-        logger.info("ConfluenceServiceClient initialized");
+    public ConfluenceServiceClient(RestTemplateBuilder builder, AtlassianConfig.ConfluenceConfig config) {
+        if (!config.isAuthConfigured()) {
+            throw new IllegalStateException("Confluence configuration is not properly configured");
+        }
+
+        RestTemplateBuilder configuredBuilder = builder.rootUri(config.getUrl() + "/rest/api");
+        
+        if (config.getPersonalToken() != null) {
+            configuredBuilder = configuredBuilder.defaultHeader("Authorization", "Bearer " + config.getPersonalToken());
+        } else {
+            configuredBuilder = configuredBuilder.basicAuthentication(config.getUsername(), config.getApiToken());
+        }
+
+        this.restTemplate = configuredBuilder.build();
+        logger.info("ConfluenceServiceClient initialized for URL: {}", config.getUrl());
     }
 
     /**
@@ -45,6 +52,66 @@ public class ConfluenceServiceClient {
         } catch (Exception e) {
             logger.error("Error listing spaces: {}", e.getMessage(), e);
             return Map.of("error", "Error listing spaces: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Search Confluence content using CQL.
+     */
+    @Tool(description = "Search Confluence content using CQL queries.")
+    public Map<String, Object> searchContent(String cql, Integer limit) {
+        logger.info("Searching Confluence content with CQL: {}", cql);
+        try {
+            String url = "/content/search?cql={cql}&limit={limit}";
+            ResponseEntity<Map> response = restTemplate.getForEntity(url, Map.class, cql, limit != null ? limit : 10);
+            return response.getBody();
+        } catch (Exception e) {
+            logger.error("Error searching content: {}", e.getMessage(), e);
+            return Map.of("error", "Error searching content: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Get page content by ID.
+     */
+    @Tool(description = "Get specific Confluence page by ID.")
+    public Map<String, Object> getPageById(String pageId, Boolean includeBody) {
+        logger.info("Fetching page by ID: {}", pageId);
+        try {
+            String expand = includeBody != null && includeBody ? "body.storage,version,space" : "version,space";
+            String url = "/content/{pageId}?expand={expand}";
+            ResponseEntity<Map> response = restTemplate.getForEntity(url, Map.class, pageId, expand);
+            return response.getBody();
+        } catch (Exception e) {
+            logger.error("Error fetching page {}: {}", pageId, e.getMessage(), e);
+            return Map.of("error", "Error fetching page: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Update an existing page.
+     */
+    @Tool(description = "Update an existing Confluence page.")
+    public Map<String, Object> updatePage(String pageId, String title, String content, Integer currentVersion) {
+        logger.info("Updating page: {}", pageId);
+        try {
+            Map<String, Object> updateData = Map.of(
+                "id", pageId,
+                "type", "page",
+                "title", title,
+                "body", Map.of("storage", Map.of("value", content, "representation", "storage")),
+                "version", Map.of("number", currentVersion + 1)
+            );
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            HttpEntity<Map<String, Object>> request = new HttpEntity<>(updateData, headers);
+
+            ResponseEntity<Map> response = restTemplate.putForObject("/content/{pageId}", request, Map.class, pageId);
+            return Map.of("success", true, "page", response);
+        } catch (Exception e) {
+            logger.error("Error updating page {}: {}", pageId, e.getMessage(), e);
+            return Map.of("error", "Error updating page: " + e.getMessage());
         }
     }
 

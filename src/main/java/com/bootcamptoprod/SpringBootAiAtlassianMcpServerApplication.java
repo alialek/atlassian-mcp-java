@@ -4,10 +4,10 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class SpringBootAiConfluenceMcpServerApplication {
+public class SpringBootAiAtlassianMcpServerApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(SpringBootAiConfluenceMcpServerApplication.class, args);
+		SpringApplication.run(SpringBootAiAtlassianMcpServerApplication.class, args);
 	}
 
 }
