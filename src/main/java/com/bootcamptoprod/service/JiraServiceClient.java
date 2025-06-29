@@ -4,6 +4,7 @@ import com.bootcamptoprod.config.AtlassianConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.tool.annotation.Tool;
+import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpEntity;
@@ -44,11 +45,10 @@ public class JiraServiceClient {
      * @param jql JQL query string. Examples: 'project = "DEV"', 'assignee = currentUser()', 'status = "In Progress"'
      * @param maxResults Maximum number of results to return (1-100). Default: 50
      */
-    @Tool(description = "Search Jira issues using JQL (Jira Query Language). " +
-                       "Parameters: jql (required) - JQL query like 'project = \"DEV\"' or 'assignee = currentUser()'; " +
-                       "maxResults (optional) - Max results 1-100, default 50. " +
-                       "Examples: 'project = \"DEV\" AND status = \"Open\"', 'assignee = currentUser() AND updated >= -7d'")
-    public Map<String, Object> searchIssues(String jql, Integer maxResults) {
+    @Tool(description = "Поиск задач в Jira с использованием JQL (Jira Query Language)", name = "searchIssues")
+    public Map<String, Object> searchIssues(
+            @ToolParam(description = "JQL запрос. Примеры: 'project = \"DEV\"', 'assignee = currentUser()', 'status = \"В работе\"'") String jql,
+            @ToolParam(description = "Максимальное количество результатов (1-100). По умолчанию: 50") Integer maxResults) {
         logger.info("Searching Jira issues with JQL: {}", jql);
         try {
             String url = "/search?jql={jql}&maxResults={maxResults}";
@@ -64,9 +64,9 @@ public class JiraServiceClient {
      * Get details of a specific Jira issue.
      * @param issueKey Jira issue key (e.g., "DEV-123", "PROJ-456")
      */
-    @Tool(description = "Get details of a specific Jira issue. " +
-                       "Parameters: issueKey (required) - Issue key like 'DEV-123' or 'PROJ-456'")
-    public Map<String, Object> getIssue(String issueKey) {
+    @Tool(description = "Получить детали конкретной задачи Jira", name = "getIssue")
+    public Map<String, Object> getIssue(
+            @ToolParam(description = "Ключ задачи Jira (например, 'DEV-123', 'PROJ-456')") String issueKey) {
         logger.info("Fetching Jira issue: {}", issueKey);
         try {
             ResponseEntity<Map> response = restTemplate.getForEntity("/issue/{issueKey}", Map.class, issueKey);
@@ -84,12 +84,12 @@ public class JiraServiceClient {
      * @param issueType Issue type (e.g., "Task", "Bug", "Story", "Epic")
      * @param description Issue description (optional, plain text)
      */
-    @Tool(description = "Create a new Jira issue. " +
-                       "Parameters: projectKey (required) - Project key like 'DEV'; " +
-                       "summary (required) - Issue title/summary; " +
-                       "issueType (required) - Type like 'Task', 'Bug', 'Story'; " +
-                       "description (optional) - Issue description text")
-    public Map<String, Object> createIssue(String projectKey, String summary, String issueType, String description) {
+    @Tool(description = "Создать новую задачу в Jira", name = "createIssue")
+    public Map<String, Object> createIssue(
+            @ToolParam(description = "Ключ проекта (например, 'DEV', 'PROJ', 'SUPPORT')") String projectKey,
+            @ToolParam(description = "Краткое описание/заголовок задачи (например, 'Исправить ошибку входа')") String summary,
+            @ToolParam(description = "Тип задачи (например, 'Task', 'Bug', 'Story', 'Epic')") String issueType,
+            @ToolParam(description = "Описание задачи (необязательно, простой текст)") String description) {
         logger.info("Creating Jira issue in project: {}", projectKey);
         try {
             Map<String, Object> issueData = Map.of(
@@ -130,11 +130,11 @@ public class JiraServiceClient {
      * @param summary New issue summary/title
      * @param description New issue description (plain text)
      */
-    @Tool(description = "Update a Jira issue. " +
-                       "Parameters: issueKey (required) - Issue key like 'DEV-123'; " +
-                       "summary (required) - New summary/title; " +
-                       "description (required) - New description text")
-    public Map<String, Object> updateIssue(String issueKey, String summary, String description) {
+    @Tool(description = "Обновить задачу Jira", name = "updateIssue")
+    public Map<String, Object> updateIssue(
+            @ToolParam(description = "Ключ задачи для обновления (например, 'DEV-123')") String issueKey,
+            @ToolParam(description = "Новое краткое описание/заголовок задачи") String summary,
+            @ToolParam(description = "Новое описание задачи (простой текст)") String description) {
         logger.info("Updating Jira issue: {}", issueKey);
         try {
             Map<String, Object> updateData = Map.of(
@@ -167,7 +167,7 @@ public class JiraServiceClient {
         }
     }
 
-    @Tool(description = "Get all projects accessible to the user")
+    @Tool(description = "Получить все доступные пользователю проекты", name = "getProjects")
     public Map<String, Object> getProjects() {
         logger.info("Fetching Jira projects");
         try {
@@ -179,8 +179,9 @@ public class JiraServiceClient {
         }
     }
 
-    @Tool(description = "Get project versions")
-    public Map<String, Object> getProjectVersions(String projectKey) {
+    @Tool(description = "Получить версии проекта", name = "getProjectVersions")
+    public Map<String, Object> getProjectVersions(
+            @ToolParam(description = "Ключ проекта (например, 'DEV', 'PROJ')") String projectKey) {
         logger.info("Fetching versions for project: {}", projectKey);
         try {
             ResponseEntity<Object[]> response = restTemplate.getForEntity("/project/{projectKey}/version", Object[].class, projectKey);
@@ -191,8 +192,10 @@ public class JiraServiceClient {
         }
     }
 
-    @Tool(description = "Add comment to a Jira issue")
-    public Map<String, Object> addComment(String issueKey, String comment) {
+    @Tool(description = "Добавить комментарий к задаче Jira", name = "addComment")
+    public Map<String, Object> addComment(
+            @ToolParam(description = "Ключ задачи (например, 'DEV-123')") String issueKey,
+            @ToolParam(description = "Текст комментария") String comment) {
         logger.info("Adding comment to issue: {}", issueKey);
         try {
             Map<String, Object> commentData = Map.of(

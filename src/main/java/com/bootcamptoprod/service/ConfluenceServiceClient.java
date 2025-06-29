@@ -4,6 +4,7 @@ import com.bootcamptoprod.config.AtlassianConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.tool.annotation.Tool;
+import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpEntity;
@@ -42,7 +43,7 @@ public class ConfluenceServiceClient {
     /**
      * List all spaces in Confluence.
      */
-    @Tool(description = "List all spaces in Confluence.")
+    @Tool(description = "Получить список всех пространств в Confluence", name = "listSpaces")
     public Map<String, Object> listSpaces() {
         logger.info("Fetching list of spaces from Confluence...");
         try {
@@ -60,11 +61,10 @@ public class ConfluenceServiceClient {
      * @param cql CQL query string. Examples: 'type=page AND space=DEV', 'title~"Meeting Notes"', 'text~"keyword"', 'space="DEV" AND created>=2024-01-01'
      * @param limit Maximum number of results to return (1-100). Default: 10
      */
-    @Tool(description = "Search Confluence content using CQL (Confluence Query Language). " +
-                       "Parameters: cql (required) - CQL query string like 'type=page AND space=DEV'; " +
-                       "limit (optional) - Max results 1-100, default 10. " +
-                       "Examples: 'type=page AND space=DEV', 'title~\"Meeting Notes\"', 'text~\"important\"'")
-    public Map<String, Object> searchContent(String cql, Integer limit) {
+    @Tool(description = "Поиск контента в Confluence с использованием CQL (Confluence Query Language)", name = "searchContent")
+    public Map<String, Object> searchContent(
+            @ToolParam(description = "CQL запрос. Примеры: 'type=page AND space=DEV', 'title~\"Заметки\"', 'text~\"важный\"'") String cql,
+            @ToolParam(description = "Максимальное количество результатов (1-100). По умолчанию: 10") Integer limit) {
         logger.info("Searching Confluence content with CQL: {}", cql);
         try {
             String url = "/content/search?cql={cql}&limit={limit}";
@@ -81,10 +81,10 @@ public class ConfluenceServiceClient {
      * @param pageId Confluence page ID (numeric string, e.g., "123456")
      * @param includeBody Whether to include page body content (true/false). Default: false
      */
-    @Tool(description = "Get specific Confluence page by ID. " +
-                       "Parameters: pageId (required) - Numeric page ID like '123456'; " +
-                       "includeBody (optional) - Include content true/false, default false")
-    public Map<String, Object> getPageById(String pageId, Boolean includeBody) {
+    @Tool(description = "Получить страницу Confluence по ID", name = "getPageById")
+    public Map<String, Object> getPageById(
+            @ToolParam(description = "ID страницы Confluence (числовая строка, например '123456')") String pageId, 
+            @ToolParam(description = "Включить содержимое страницы (true/false). По умолчанию: false") Boolean includeBody) {
         logger.info("Fetching page by ID: {}", pageId);
         try {
             String expand = includeBody != null && includeBody ? "body.storage,version,space" : "version,space";
@@ -104,12 +104,12 @@ public class ConfluenceServiceClient {
      * @param content New page content in Confluence storage format
      * @param currentVersion Current version number of the page (required for update)
      */
-    @Tool(description = "Update an existing Confluence page. " +
-                       "Parameters: pageId (required) - Numeric page ID; " +
-                       "title (required) - New page title; " +
-                       "content (required) - New content in storage format; " +
-                       "currentVersion (required) - Current version number")
-    public Map<String, Object> updatePage(String pageId, String title, String content, Integer currentVersion) {
+    @Tool(description = "Обновить существующую страницу Confluence", name = "updatePage")
+    public Map<String, Object> updatePage(
+            @ToolParam(description = "ID страницы для обновления (числовая строка, например '123456')") String pageId,
+            @ToolParam(description = "Новый заголовок страницы") String title,
+            @ToolParam(description = "Новое содержимое страницы в формате Confluence storage") String content,
+            @ToolParam(description = "Текущий номер версии страницы (обязательно для обновления)") Integer currentVersion) {
         logger.info("Updating page: {}", pageId);
         try {
             Map<String, Object> updateData = Map.of(
@@ -135,8 +135,9 @@ public class ConfluenceServiceClient {
     /**
      * Get the number of documents in a specific space.
      */
-    @Tool(description = "Get the number of documents in a specific Confluence space.")
-    public Map<String, Object> getDocumentCountInSpace(String spaceKey) {
+    @Tool(description = "Получить количество документов в определенном пространстве Confluence", name = "getDocumentCountInSpace")
+    public Map<String, Object> getDocumentCountInSpace(
+            @ToolParam(description = "Ключ пространства (например, 'DEV', 'TEAM')") String spaceKey) {
         logger.info("Fetching document count for space: {}", spaceKey);
         try {
             String cql = "space=" + spaceKey;
@@ -152,8 +153,9 @@ public class ConfluenceServiceClient {
     /**
      * List documents in a specific space.
      */
-    @Tool(description = "List all documents in a specific Confluence space.")
-    public Map<String, Object> listDocumentsInSpace(String spaceKey) {
+    @Tool(description = "Получить список всех документов в определенном пространстве Confluence", name = "listDocumentsInSpace")
+    public Map<String, Object> listDocumentsInSpace(
+            @ToolParam(description = "Ключ пространства (например, 'DEV', 'TEAM')") String spaceKey) {
         logger.info("Fetching documents in space: {}", spaceKey);
         try {
             ResponseEntity<Map> response = restTemplate.getForEntity("/space/{spaceKey}/content", Map.class, spaceKey);
@@ -171,11 +173,11 @@ public class ConfluenceServiceClient {
      * @param title Page title (e.g., "Meeting Notes", "API Documentation")
      * @param content Page content in Confluence storage format (HTML-like)
      */
-    @Tool(description = "Create a new Confluence document with a given title and content in a specific space. " +
-                       "Parameters: spaceKey (required) - Space key like 'DEV' or 'TEAM'; " +
-                       "title (required) - Page title; " +
-                       "content (required) - Page content in storage format")
-    public Map<String, Object> createDocument(String spaceKey, String title, String content) {
+    @Tool(description = "Создать новый документ Confluence с заданным заголовком и содержимым", name = "createDocument")
+    public Map<String, Object> createDocument(
+            @ToolParam(description = "Ключ пространства (например, 'DEV', 'TEAM', 'DOCS')") String spaceKey,
+            @ToolParam(description = "Заголовок страницы (например, 'Заметки встречи', 'API документация')") String title,
+            @ToolParam(description = "Содержимое страницы в формате Confluence storage (HTML-подобный)") String content) {
         logger.info("Creating a new document '{}' in space '{}'", title, spaceKey);
         try {
             String payload = String.format(
@@ -199,8 +201,9 @@ public class ConfluenceServiceClient {
     /**
      * Extract page history of a specific document.
      */
-    @Tool(description = "Extract the version history of a specific Confluence document.")
-    public Map<String, Object> getPageHistory(String documentId) {
+    @Tool(description = "Получить историю версий определенного документа Confluence", name = "getPageHistory")
+    public Map<String, Object> getPageHistory(
+            @ToolParam(description = "ID документа (числовая строка, например '123456')") String documentId) {
         logger.info("Fetching page history for document: {}", documentId);
         try {
             ResponseEntity<Map> response = restTemplate.getForEntity("/content/{id}/version", Map.class, documentId);
@@ -215,8 +218,9 @@ public class ConfluenceServiceClient {
     /**
      * Extract metadata of a specific document.
      */
-    @Tool(description = "Extract metadata of a specific Confluence document.")
-    public Map<String, Object> getDocumentMetadata(String documentId) {
+    @Tool(description = "Получить метаданные определенного документа Confluence", name = "getDocumentMetadata")
+    public Map<String, Object> getDocumentMetadata(
+            @ToolParam(description = "ID документа (числовая строка, например '123456')") String documentId) {
         logger.info("Fetching metadata for document: {}", documentId);
         try {
             ResponseEntity<Map> response = restTemplate.getForEntity("/content/{id}", Map.class, documentId);
